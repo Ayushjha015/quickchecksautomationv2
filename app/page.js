@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { Settings, CheckCircle2, XCircle } from 'lucide-react';
+import { Settings, CheckCircle2, XCircle, Globe, RefreshCw } from 'lucide-react';
 
 export default function Home() {
   const [time, setTime] = useState('--:--:--');
@@ -22,6 +22,10 @@ export default function Home() {
     employeeId: ''
   });
 
+  const [extensionInstalled, setExtensionInstalled] = useState(false);
+  const [hasCachedSession, setHasCachedSession] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+
   useEffect(() => {
     // Clock
     const updateTime = () => {
@@ -39,8 +43,62 @@ export default function Home() {
         if (data.config) setConfig(data.config);
       });
 
-    return () => clearInterval(interval);
+    // Check if cookies are cached on backend
+    fetch('/api/cookies')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.cookies && data.cookies.length > 0) {
+          setHasCachedSession(true);
+        }
+      })
+      .catch(err => console.error("Error checking cookies cache:", err));
+
+    // Listen for extension messaging
+    const handleMessage = (event) => {
+      if (event.data && event.data.type === 'PONG_QUIKCHEX_EXTENSION') {
+        setExtensionInstalled(true);
+      }
+      if (event.data && event.data.type === 'SYNC_COOKIES_RESPONSE') {
+        setIsSyncing(false);
+        if (event.data.success) {
+          setStatusMsg('Session synced to browser!');
+          setTimeout(() => setStatusMsg('Ready to mark attendance'), 3000);
+        } else {
+          alert('Failed to sync cookies to browser: ' + event.data.error);
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+
+    // Continuous ping to detect when extension gets enabled
+    const pingInterval = setInterval(() => {
+      window.postMessage({ type: 'PING_QUIKCHEX_EXTENSION' }, '*');
+    }, 500);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(pingInterval);
+      window.removeEventListener('message', handleMessage);
+    };
   }, []);
+
+  const syncCookiesToBrowser = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await fetch('/api/cookies');
+      const data = await res.json();
+      if (data.success && data.cookies && data.cookies.length > 0) {
+        window.postMessage({ type: 'SYNC_COOKIES', cookies: data.cookies }, '*');
+      } else {
+        setIsSyncing(false);
+        alert('No login session found. Please mark attendance first to authenticate.');
+      }
+    } catch (error) {
+      setIsSyncing(false);
+      alert('Error fetching session cookies: ' + error.message);
+    }
+  };
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -95,6 +153,18 @@ export default function Home() {
                 const elapsed = ((Date.now() - startTimeRef.current) / 1000).toFixed(1);
                 setStatus('ready');
                 setStatusMsg('Attendance marked successfully!');
+
+                let syncMessage = '';
+                if (data.result.cookies && data.result.cookies.length > 0) {
+                  setHasCachedSession(true);
+                  if (extensionInstalled) {
+                    window.postMessage({ type: 'SYNC_COOKIES', cookies: data.result.cookies }, '*');
+                    syncMessage = '<br><span style="color: var(--success-start); font-size: 0.85rem;">🔄 Browser session synced! You are now logged in on secure.quikchex.in.</span>';
+                  } else {
+                    syncMessage = '<br><span style="color: var(--warning-start); font-size: 0.85rem;">⚠️ Session cached. Install the Chrome extension to sync login session to your browser.</span>';
+                  }
+                }
+
                 setResult({
                   type: 'success',
                   title: 'Success!',
@@ -103,6 +173,7 @@ export default function Home() {
                     ${data.result.check_in ? `<strong class="result-time">Check In:</strong> ${data.result.check_in}<br>` : ''}
                     ${data.result.check_out ? `<strong class="result-time">Check Out:</strong> ${data.result.check_out}` : ''}
                     ${!data.result.check_in && !data.result.check_out ? 'Your attendance has been recorded.' : ''}
+                    ${syncMessage}
                   `
                 });
               } else if (data.type === 'error') {
@@ -211,6 +282,44 @@ export default function Home() {
               )}
             </div>
           )}
+
+          {/* Extension Status Card */}
+          <div className="ext-sync-card">
+            <div className="ext-sync-header">
+              <span className="ext-sync-title">
+                <Globe size={18} /> Browser Cookie Sync
+              </span>
+              <span className={`ext-badge ${extensionInstalled ? 'active' : 'inactive'}`}>
+                {extensionInstalled ? 'Active' : 'Not Loaded'}
+              </span>
+            </div>
+            <div className="ext-sync-body">
+              {extensionInstalled ? (
+                <>
+                  <p>Helper extension active. QuikChex login session is automatically synchronized with your browser.</p>
+                  {hasCachedSession && (
+                    <button 
+                      className="btn-sync" 
+                      onClick={syncCookiesToBrowser}
+                      disabled={isSyncing}
+                    >
+                      <RefreshCw size={14} className={isSyncing ? 'spinner-small' : ''} />
+                      {isSyncing ? 'Syncing...' : 'Sync Session to Browser'}
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p>To access QuikChex in your browser without logging in again, load the helper extension:</p>
+                  <ol className="ext-sync-steps">
+                    <li>Navigate to <code>chrome://extensions/</code> in your browser.</li>
+                    <li>Enable <strong>Developer mode</strong> (toggle top-right).</li>
+                    <li>Click <strong>Load unpacked</strong> and select the <code>chrome-extension/</code> folder in this project's root.</li>
+                  </ol>
+                </>
+              )}
+            </div>
+          </div>
 
           <div className="footer">
             <p>Powered by <a href="#" className="footer-link">QuickChecks Automation</a></p>

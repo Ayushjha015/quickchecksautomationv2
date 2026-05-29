@@ -1,0 +1,10 @@
+[
+  {
+    "name": "_quikchex_app_session",
+    "value": "36eef21f0cb7b05063f04a11c9f8f0ae",
+    "domain": "secure.quikchex.in",
+    "path": "/",
+    "secure": true,
+    "httpOnly": true
+  }
+]

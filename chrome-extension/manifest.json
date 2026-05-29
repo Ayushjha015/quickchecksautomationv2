@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "QuikChex Cookie Sync",
+  "version": "1.0",
+  "description": "Helper extension to sync QuikChex session cookies from the local attendance tracker.",
+  "permissions": [
+    "cookies"
+  ],
+  "host_permissions": [
+    "https://secure.quikchex.in/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost/*",
+        "http://127.0.0.1/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ]
+}

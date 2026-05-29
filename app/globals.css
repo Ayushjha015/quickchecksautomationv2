@@ -615,3 +615,104 @@ h1 {
   from { opacity: 0; transform: translateX(-10px); }
   to { opacity: 1; transform: translateX(0); }
 }
+
+/* Extension Sync Styles */
+.ext-sync-card {
+    margin-top: var(--spacing-lg);
+    background: hsla(230, 22%, 14%, 0.8);
+    border: 1px solid hsla(0, 0%, 100%, 0.1);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    text-align: left;
+    animation: slideDown var(--transition-normal);
+}
+
+.ext-sync-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+}
+
+.ext-sync-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.ext-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ext-badge.active {
+    background: hsla(142, 76%, 45%, 0.2);
+    color: var(--success-start);
+    border: 1px solid hsla(142, 76%, 45%, 0.3);
+}
+
+.ext-badge.inactive {
+    background: hsla(38, 92%, 50%, 0.2);
+    color: var(--warning-start);
+    border: 1px solid hsla(38, 92%, 50%, 0.3);
+}
+
+.ext-sync-body {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.ext-sync-steps {
+    margin-top: var(--spacing-xs);
+    padding-left: var(--spacing-md);
+    list-style-type: decimal;
+}
+
+.ext-sync-steps li {
+    margin-bottom: 6px;
+}
+
+.ext-sync-steps code {
+    background: hsla(0, 0%, 0%, 0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    color: var(--text-primary);
+}
+
+.btn-sync {
+    margin-top: var(--spacing-sm);
+    width: 100%;
+    padding: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: linear-gradient(135deg, var(--secondary-start), var(--secondary-end));
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+}
+
+.btn-sync:hover:not(:disabled) {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.btn-sync:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
